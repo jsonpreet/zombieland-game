@@ -5,6 +5,7 @@ export class Input {
     this.mouse = { x: 0, y: 0, down: false }
     this.right = false
     this.rightPressed = false
+    this.wheel = 0
 
     this._kd = (e) => {
       if (['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault()
@@ -29,10 +30,16 @@ export class Input {
       if (e.button === 2) this.right = false
     }
     this._cm = (e) => e.preventDefault()
+    this._wh = (e) => {
+      const d = Math.sign(e.deltaY)
+      if (d !== 0) this.wheel = d
+      if (e.preventDefault) e.preventDefault()
+    }
     this._blur = () => {
       this.keys.clear()
       this.mouse.down = false
       this.right = false
+      this.wheel = 0
     }
 
     window.addEventListener('keydown', this._kd)
@@ -40,6 +47,7 @@ export class Input {
     window.addEventListener('mousemove', this._mm)
     window.addEventListener('mousedown', this._md)
     window.addEventListener('mouseup', this._mu)
+    window.addEventListener('wheel', this._wh, { passive: false })
     window.addEventListener('blur', this._blur)
     canvas.addEventListener('contextmenu', this._cm)
   }
@@ -74,6 +82,7 @@ export class Input {
     window.removeEventListener('mousemove', this._mm)
     window.removeEventListener('mousedown', this._md)
     window.removeEventListener('mouseup', this._mu)
+    window.removeEventListener('wheel', this._wh)
     window.removeEventListener('blur', this._blur)
   }
 }

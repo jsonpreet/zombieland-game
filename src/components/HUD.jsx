@@ -83,6 +83,8 @@ export function HUD() {
         <span className="hud-sep">·</span>
         <span className="hud-key">{s.muted ? 'SOUND OFF [M]' : 'SOUND ON [M]'}</span>
         <span className="hud-sep">·</span>
+        <span className="hud-key">[I] BAG</span>
+        <span className="hud-sep">·</span>
         <span className="hud-key">ESC PAUSE</span>
       </div>
 
@@ -95,9 +97,10 @@ export function HUD() {
           {s.shield > 0 && <span className="hud-shield">SHLD {s.shield}</span>}
         </div>
         <div className="hud-weapons">
-          {s.owned.map((w, i) => (
+          <span className="hud-wep-label">WHEEL</span>
+          {s.owned.map((w) => (
             <span key={w} className={`hud-wep ${w === s.weaponId ? 'hud-wep-on' : ''}`}>
-              {i + 1} {w === 'shotgun' ? 'SG' : w === 'pistol' ? 'P' : w.toUpperCase()}
+              {w === 'shotgun' ? 'SG' : w === 'pistol' ? 'P' : w.toUpperCase()}
             </span>
           ))}
         </div>
@@ -127,7 +130,7 @@ export function HUD() {
         <div className="hud-inv">
           {ITEM_ROW.map(([id, name], i) => (
             <div key={id} className={`hud-item ${s.inv[id] > 0 ? 'hud-item-on' : ''}`}>
-              <span className="hud-item-key">{5 + i}</span>
+              <span className="hud-item-key">{i + 1}</span>
               <span className="hud-item-name">{name}</span>
               <span className="hud-item-count">{s.inv[id]}</span>
             </div>

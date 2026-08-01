@@ -4,6 +4,8 @@ const listeners = new Set()
 
 let state = {
   phase: 'menu',
+  paused: false,
+  inventoryOpen: false,
   health: 100,
   maxHealth: 100,
   shield: 0,
@@ -15,6 +17,8 @@ let state = {
   reloading: false,
   reloadProgress: 0,
   owned: ['pistol'],
+  mags: {},
+  mods: { dmg: 0, rof: 0, hp: 0, spd: 0, reload: 0 },
   scrap: 0,
   score: 0,
   wave: 0,

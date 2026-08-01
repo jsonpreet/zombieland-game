@@ -290,6 +290,11 @@ body {
   letter-spacing: 0.08em;
 }
 
+.hud-wep-label {
+  color: var(--mut);
+  margin-right: 2px;
+}
+
 .hud-wep-on {
   color: var(--ink);
 }
@@ -825,6 +830,49 @@ body {
 .shop-tip {
   font-size: 12px;
   color: var(--dim);
+}
+
+.inv {
+  width: min(900px, 94vw);
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  padding: 28px 32px 24px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.inv-sub {
+  margin-top: 22px;
+}
+
+.shop-row-locked .shop-row-name,
+.shop-row-locked .shop-row-desc {
+  color: var(--mut);
+}
+
+.inv-control {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-top: 1px solid var(--edge);
+  font-size: 12px;
+}
+
+.inv-control-key {
+  font-family: 'Chakra Petch', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--amber);
+  min-width: 84px;
+}
+
+.inv-control-what {
+  color: var(--dim);
+  letter-spacing: 0.04em;
 }
 
 .gameover {

@@ -45,6 +45,7 @@ export class Game {
     this.viewH = window.innerHeight
     this.phase = 'menu'
     this.paused = false
+    this.inventoryOpen = false
     this.placeMode = false
     this.shake = 0
     this.flash = 0
@@ -190,6 +191,20 @@ export class Game {
     this.cars = []
     this.streetLights = []
 
+    const RING = 500
+    const RING_END = 7500
+    this.railRects = [
+      { x: 2500, y: 4000, w: 96, h: WORLD },
+      { x: RING, y: 4000, w: 96, h: RING_END - RING },
+      { x: RING_END, y: 4000, w: 96, h: RING_END - RING },
+      { x: 4000, y: RING, w: RING_END - RING, h: 96 },
+      { x: 4000, y: RING_END, w: RING_END - RING, h: 96 },
+      { x: RING, y: RING, w: 180, h: 180 },
+      { x: RING_END, y: RING, w: 180, h: 180 },
+      { x: RING, y: RING_END, w: 180, h: 180 },
+      { x: RING_END, y: RING_END, w: 180, h: 180 }
+    ]
+
     this.paintGround(g)
     this.paintZones(g)
     this.paintRoads(g)
@@ -209,7 +224,7 @@ export class Game {
       const y = randRange(CORE + 120, CORE_END - 120)
       if (dist(x, y, CENTER, CENTER) < 420) continue
       if (this.pointInBuilding(x, y)) continue
-      if (this.nearRoad(x, y, 1, 1, 60)) continue
+      if (this.nearRoad(x, y, 1, 1, 60) || this.nearRail(x, y, 1, 1, 60)) continue
       let bad = false
       for (const b of this.buildings) {
         if (this.rectsNear(x, y, 1, 1, b.x - 40, b.y - 40, b.w + 80, b.h + 80, 30)) {
@@ -393,20 +408,74 @@ export class Game {
       g.fillRect(randRange(4110, 6980), randRange(4910, 6480), randRange(2, 5), randRange(2, 5))
     }
 
-    const tx = 2500
-    g.fillStyle = 'rgba(26,22,16,0.9)'
-    g.fillRect(tx - 48, 4020, 96, 2960)
-    g.fillStyle = '#2c241a'
-    for (let y = 4020; y < 6980; y += 15) {
-      g.fillRect(tx - 22, y, 44, 8)
+    const track = (cx, cy, len, horiz) => {
+      g.fillStyle = 'rgba(26,22,16,0.9)'
+      g.fillRect(cx - (horiz ? len / 2 : 48), cy - (horiz ? 48 : len / 2), horiz ? len : 96, horiz ? 96 : len)
+      g.fillStyle = '#2c241a'
+      for (let i = 0; i < len; i += 15) {
+        g.fillRect(horiz ? cx - len / 2 + i : cx - 22, horiz ? cy - 22 : cy - len / 2 + i, 44, 8)
+      }
+      g.fillStyle = '#56564f'
+      if (horiz) {
+        g.fillRect(cx - len / 2, cy - 22, len, 4)
+        g.fillRect(cx - len / 2, cy + 18, len, 4)
+      } else {
+        g.fillRect(cx - 24, cy - len / 2, 4, len)
+        g.fillRect(cx + 20, cy - len / 2, 4, len)
+      }
     }
-    g.fillStyle = '#56564f'
-    g.fillRect(tx - 24, 4020, 4, 2960)
-    g.fillRect(tx + 20, 4020, 4, 2960)
+
+    const tx = 2500
+    const RING = 500
+    const RING_END = 7500
+    const SPAN = RING_END - RING
+    track(tx, 4000, WORLD, false)
+    track(RING, 4000, SPAN, false)
+    track(RING_END, 4000, SPAN, false)
+    track(4000, RING, SPAN, true)
+    track(4000, RING_END, SPAN, true)
+    const corners = [
+      [RING, RING, 0, Math.PI / 2],
+      [RING_END, RING, Math.PI / 2, Math.PI],
+      [RING, RING_END, Math.PI, Math.PI * 1.5],
+      [RING_END, RING_END, Math.PI * 1.5, Math.PI * 2]
+    ]
+    for (const [cx, cy, a0, a1] of corners) {
+      g.fillStyle = 'rgba(26,22,16,0.9)'
+      g.strokeStyle = 'rgba(26,22,16,0.9)'
+      g.lineCap = 'square'
+      g.lineWidth = 96
+      g.beginPath()
+      g.arc(cx, cy, 90, a0, a1)
+      g.stroke()
+      g.strokeStyle = '#56564f'
+      g.lineWidth = 4
+      g.beginPath()
+      g.arc(cx, cy, 68, a0, a1)
+      g.stroke()
+      g.beginPath()
+      g.arc(cx, cy, 112, a0, a1)
+      g.stroke()
+    }
+
     g.fillStyle = 'rgba(44,47,42,0.9)'
     g.fillRect(2300, 5380, 400, 100)
     g.fillStyle = 'rgba(255,255,255,0.06)'
     g.fillRect(2300, 5380, 400, 5)
+  }
+
+  nearRail(x, y, w, h, pad) {
+    for (const r of this.railRects) {
+      if (this.rectsNear(x, y, w, h, r.x - r.w / 2, r.y - r.h / 2, r.w, r.h, pad)) return true
+    }
+    return false
+  }
+
+  nearRail(x, y, w, h, pad) {
+    for (const r of this.railRects) {
+      if (this.rectsNear(x, y, w, h, r.x - r.w / 2, r.y - r.h / 2, r.w, r.h, pad)) return true
+    }
+    return false
   }
 
   nearRoad(x, y, w, h, pad) {
@@ -484,9 +553,9 @@ export class Game {
         let y = randRange(z.y + 110, z.y + z.h - 110 - h)
         if (L.eastOnly) x = randRange(2700, z.x + z.w - 110 - w)
         if (L.southOnly) y = randRange(5100, z.y + z.h - 110 - h)
-        if (dist(x + w / 2, y + h / 2, CENTER, CENTER) < 440) continue
-        if (this.nearRoad(x, y, w, h, 8)) continue
-        let bad = false
+      if (dist(x + w / 2, y + h / 2, CENTER, CENTER) < 440) continue
+      if (this.nearRoad(x, y, w, h, 8) || this.nearRail(x, y, w, h, 8)) continue
+      let bad = false
         for (const b of this.buildings) {
           if (this.rectsNear(x, y, w, h, b.x, b.y, b.w, b.h, 130)) {
             bad = true
@@ -668,6 +737,7 @@ export class Game {
       }
       const r = randRange(22, 38)
       if (dist(x, y, CENTER, CENTER) < 520) continue
+      if (this.nearRail(x, y, 1, 1, 60)) continue
       let bad = false
       for (const o of this.obstacles) {
         if (o.kind === 'circle' && dist(x, y, o.x, o.y) < r + o.r + 26) {
@@ -697,6 +767,7 @@ export class Game {
   genOutdoorCrates(g) {
     const place = (x, y, r) => {
       if (this.pointInBuilding(x, y)) return
+      if (this.nearRail(x, y, 1, 1, 60)) return
       for (const o of this.obstacles) {
         if (dist(x, y, o.x, o.y) < r + 40) return
       }
@@ -800,10 +871,14 @@ export class Game {
       this.drawCar(g, car)
       return true
     }
+    addCar(2500, 900, Math.PI / 2, 'train')
     addCar(2500, 4550, Math.PI / 2, 'train')
     addCar(2500, 5300, Math.PI / 2, 'train')
     addCar(2500, 6250, Math.PI / 2, 'train')
     addCar(2500, 6750, Math.PI / 2, 'train')
+    addCar(2500, 7200, Math.PI / 2, 'train')
+    addCar(500, 4000, Math.PI / 2, 'train')
+    addCar(4000, 500, 0, 'train')
     addCar(5150, 5150, 0, 'plane')
     addCar(6400, 5250, 0.06, 'plane')
     const spawnIn = (z, n, rotR = () => randRange(0, TAU)) => {
@@ -814,7 +889,7 @@ export class Game {
         const x = randRange(z.x + 130, z.x + z.w - 130)
         const y = randRange(z.y + 130, z.y + z.h - 130)
         if (dist(x, y, CENTER, CENTER) < 470) continue
-        if (this.nearRoad(x, y, 1, 1, 30)) continue
+        if (this.nearRoad(x, y, 1, 1, 30) || this.nearRail(x, y, 1, 1, 30)) continue
         if (addCar(x, y, rotR(), 'car')) placed++
       }
     }
@@ -1145,7 +1220,13 @@ export class Game {
       return
     }
 
-    if (this.paused) {
+    if (this.paused || this.inventoryOpen) {
+      inp.wheel = 0
+      if (this.inventoryOpen && (inp.press('escape') || inp.press('p') || inp.press('i'))) {
+        this.toggleInventory()
+      } else if (this.paused && (inp.press('escape') || inp.press('p'))) {
+        this.togglePause()
+      }
       this.render()
       this.emitHud()
       return
@@ -1237,11 +1318,12 @@ export class Game {
     if (inp.press('m')) this.toggleMute()
     if (inp.press('escape') || inp.press('p')) this.togglePause()
     if (inp.press('t')) this.togglePlaceMode()
-    if (inp.press('1')) this.switchWeapon(0)
-    if (inp.press('2')) this.switchWeapon(1)
-    if (inp.press('3')) this.switchWeapon(2)
-    if (inp.press('4')) this.switchWeapon(3)
-    const ITEM_KEYS = ['5', '6', '7', '8']
+    if (inp.press('i')) this.toggleInventory()
+    if (inp.wheel !== 0) {
+      this.cycleWeapon(inp.wheel)
+      inp.wheel = 0
+    }
+    const ITEM_KEYS = ['1', '2', '3', '4']
     ITEM_ORDER.forEach((kind, i) => {
       if (inp.press(ITEM_KEYS[i])) this.useItem(kind)
     })
@@ -1865,6 +1947,31 @@ export class Game {
     this.emitHud()
   }
 
+  toggleInventory() {
+    if (this.phase !== 'playing' && this.phase !== 'day') return
+    if (this.placeMode) return
+    this.inventoryOpen = !this.inventoryOpen
+    if (this.inventoryOpen) this.paused = false
+    this.audio.ensure()
+    this.emitHud()
+  }
+
+  cycleWeapon(dir) {
+    const p = this.player
+    if (!p || this.phase !== 'playing') return
+    const owned = ORDER.filter((id) => p.owned.includes(id))
+    if (owned.length < 2) return
+    let i = Math.max(0, owned.indexOf(p.weaponId))
+    i = (i + Math.sign(dir) + owned.length) % owned.length
+    const target = owned[i]
+    if (target === p.weaponId) return
+    p.weaponId = target
+    p.weaponIdx = ORDER.indexOf(target)
+    p.reloading = false
+    this.audio.click()
+    this.emitHud()
+  }
+
   quitToMenu() {
     this.paused = false
     this.phase = 'menu'
@@ -1922,6 +2029,7 @@ export class Game {
     store.emit({
       phase: this.phase,
       paused: this.paused,
+      inventoryOpen: this.inventoryOpen,
       health: Math.max(0, Math.ceil(p.hp)),
       maxHealth: p.maxHp,
       shield: Math.ceil(p.shield),
@@ -1933,6 +2041,8 @@ export class Game {
       reloading: p.reloading,
       reloadProgress: p.reloading ? 1 - p.reloadT / p.reloadTotal : 0,
       owned: [...p.owned],
+      mags: Object.fromEntries(ORDER.map((id) => [id, this.getAmmo(id)])),
+      mods: { ...p.mods },
       scrap: this.scrap,
       score: this.score,
       wave: this.wave,
@@ -2502,24 +2612,36 @@ export class Game {
   }
 
   drawMinimap(ctx) {
-    const size = 168
-    const pad = 8
+    const size = 178
+    const pad = 9
     const x0 = this.viewW - size - 22
-    const y0 = this.viewH - size - 96
+    const y0 = this.viewH - size - 100
     const sc = (size - pad * 2) / WORLD
     const X = (v) => x0 + pad + v * sc
     const Y = (v) => y0 + pad + v * sc
 
     ctx.save()
-    ctx.fillStyle = 'rgba(9,11,8,0.66)'
+    ctx.fillStyle = 'rgba(14,17,12,0.88)'
     ctx.beginPath()
-    this.rrect(ctx, x0, y0, size, size, 8)
+    this.rrect(ctx, x0 - 2, y0 - 18, size + 4, size + 22, 8)
     ctx.fill()
-    ctx.strokeStyle = 'rgba(214,178,120,0.28)'
+    ctx.strokeStyle = 'rgba(214,178,120,0.55)'
+    ctx.lineWidth = 1
+    ctx.stroke()
+    ctx.fillStyle = 'rgba(214,178,120,0.85)'
+    ctx.font = '600 9px "Chakra Petch", sans-serif'
+    ctx.textAlign = 'left'
+    ctx.fillText('MAP', x0 + 8, y0 - 6)
+
+    ctx.fillStyle = 'rgba(4,5,3,0.9)'
+    ctx.beginPath()
+    this.rrect(ctx, x0, y0, size, size, 7)
+    ctx.fill()
+    ctx.strokeStyle = 'rgba(214,178,120,0.4)'
     ctx.lineWidth = 1
     ctx.stroke()
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.13)'
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)'
     ctx.lineWidth = 1.4
     for (const ax of AVENUE_X) {
       ctx.beginPath()
@@ -2544,6 +2666,14 @@ export class Game {
       ctx.stroke()
     }
 
+    ctx.strokeStyle = 'rgba(214,178,120,0.5)'
+    ctx.lineWidth = 1.2
+    ctx.beginPath()
+    ctx.moveTo(X(2500), Y(0))
+    ctx.lineTo(X(2500), Y(WORLD))
+    ctx.stroke()
+    ctx.strokeRect(X(500), Y(500), X(7500) - X(500), Y(7500) - Y(500))
+
     for (const b of this.buildings) {
       ctx.fillStyle = b.infested ? 'rgba(216,168,84,0.85)' : 'rgba(124,128,112,0.9)'
       ctx.fillRect(X(b.x), Y(b.y), Math.max(1.6, b.w * sc), Math.max(1.6, b.h * sc))
@@ -2556,7 +2686,7 @@ export class Game {
 
     const camX = Math.max(0, Math.min(WORLD - this.viewW, this.camera.x - this.viewW / 2))
     const camY = Math.max(0, Math.min(WORLD - this.viewH, this.camera.y - this.viewH / 2))
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)'
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)'
     ctx.lineWidth = 1
     ctx.setLineDash([3, 3])
     ctx.strokeRect(X(camX), Y(camY), Math.min(this.viewW, WORLD) * sc, Math.min(this.viewH, WORLD) * sc)
@@ -2573,7 +2703,7 @@ export class Game {
     ctx.lineWidth = 1.4
     ctx.beginPath()
     ctx.moveTo(X(this.player.x), Y(this.player.y))
-    ctx.lineTo(X(this.player.x + Math.cos(this.player.rot) * 9), Y(this.player.y + Math.sin(this.player.rot) * 9))
+    ctx.lineTo(X(this.player.x + Math.cos(this.player.aim) * 9), Y(this.player.y + Math.sin(this.player.aim) * 9))
     ctx.stroke()
     ctx.restore()
   }
