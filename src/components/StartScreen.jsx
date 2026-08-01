@@ -80,9 +80,9 @@ export function StartScreen() {
             <div><span className="kc">T</span> place turret</div>
           </div>
           <div className="start-col">
-            <div><span className="kc">R</span> reload</div>
-            <div><span className="kc">1-4</span> weapon</div>
-            <div><span className="kc">5-8</span> eat / heal</div>
+            <div><span className="kc">SCROLL</span> switch weapon</div>
+            <div><span className="kc">1-4</span> eat / heal</div>
+            <div><span className="kc">I</span> bag / inventory</div>
             <div><span className="kc">E</span> search loot</div>
             <div><span className="kc">ESC</span> pause</div>
           </div>

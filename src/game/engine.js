@@ -1899,6 +1899,9 @@ export class Game {
   }
 
   startGame() {
+    this.input.pressed.clear()
+    this.input.keys.clear()
+    this.input.wheel = 0
     this.resetPlayer()
     this.zombies = []
     this.bullets = []
