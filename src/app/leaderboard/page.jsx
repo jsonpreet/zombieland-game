@@ -41,9 +41,9 @@ export default function LeaderboardPage() {
   return (
     <div className="lb-page">
       <div className="lb-head">
-        <div className="lb-kicker">SPOTTED</div>
+        <div className="lb-kicker">ZOMBIE DEEP CITY</div>
         <div className="lb-title">SURVIVOR BOARD</div>
-        <div className="lb-sub">every run is recorded. the dead remember you.</div>
+        <div className="lb-sub">every run is recorded. seven nights to freedom.</div>
       </div>
 
       <div className="lb-stats">

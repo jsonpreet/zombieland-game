@@ -9,6 +9,8 @@ let state = {
   health: 100,
   maxHealth: 100,
   shield: 0,
+  armor: 0,
+  ext: {},
   weaponId: 'pistol',
   weaponName: 'PISTOL',
   mag: 12,
@@ -37,7 +39,9 @@ let state = {
 }
 
 if (typeof window !== 'undefined') {
-  state.highScore = Number(window.localStorage.getItem('spotted.high') || 0)
+  state.highScore = Number(
+    window.localStorage.getItem('zdc.high') || window.localStorage.getItem('spotted.high') || 0
+  )
 }
 
 export const store = {

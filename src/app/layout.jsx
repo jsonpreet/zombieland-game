@@ -1,8 +1,8 @@
 import '../App.css'
 
 export const metadata = {
-  title: 'SPOTTED - zombie survival',
-  description: 'hold the doors, loot what you can, survive the nights.'
+  title: 'ZOMBIE DEEP CITY - zombie survival',
+  description: 'seven nights. hold the doors, loot what you can, survive.'
 }
 
 export default function RootLayout({ children }) {

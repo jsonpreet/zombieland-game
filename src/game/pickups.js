@@ -65,9 +65,30 @@ function collectPickup(game, pk) {
       break
     case 'ammo': {
       const w = getWeapon(p.weaponId)
+      const am = p.mags[p.weaponId] || { m: w.mag, r: w.reserve }
       const max = w.mag * 5
-      p.reserve = clamp(p.reserve + 25, 0, max)
+      am.r = clamp(am.r + 25, 0, max)
       game.texts.add(pk.x, pk.y - 12, '+AMMO', '#c9c4b2', 15)
+      game.audio.pickup()
+      break
+    }
+    case 'armor':
+      p.armor = Math.min(p.armor + 1, 3)
+      game.texts.add(pk.x, pk.y - 12, '+ARMOR', '#8fa0b0', 15)
+      game.audio.pickup()
+      break
+    case 'mag': {
+      const w = getWeapon(p.weaponId)
+      const am = p.mags[p.weaponId] || { m: w.mag, r: w.reserve }
+      if (!p.ext[p.weaponId]) {
+        p.ext[p.weaponId] = true
+        am.r = Math.min(am.r + Math.ceil(w.reserve * 0.5), w.reserve * 4)
+        am.m = Math.min(am.m + Math.ceil(w.mag * 0.5), w.mag * 2)
+        game.texts.add(pk.x, pk.y - 12, `+MAG EXT ${w.name}`, '#d9a23f', 15)
+      } else {
+        am.r = Math.min(am.r + 20, w.reserve * 4)
+        game.texts.add(pk.x, pk.y - 12, '+AMMO', '#c9c4b2', 15)
+      }
       game.audio.pickup()
       break
     }
@@ -149,7 +170,9 @@ export function drawPickups(ctx, game) {
         ammo: '#c9b45c',
         double: '#d97b3f',
         speed: '#8fb3c9',
-        shield: '#7d9bb3'
+        shield: '#7d9bb3',
+        armor: '#9aa8b5',
+        mag: '#b58a4a'
       }
       g.addColorStop(0, '#f5f2e8')
       g.addColorStop(1, c[pk.type])
@@ -201,6 +224,27 @@ export function drawPickups(ctx, game) {
         ctx.lineTo(pk.x - 6, y - 3)
         ctx.closePath()
         ctx.stroke()
+      } else if (pk.type === 'armor') {
+        ctx.fillStyle = '#5c6b78'
+        ctx.beginPath()
+        ctx.moveTo(pk.x, y - 6)
+        ctx.lineTo(pk.x + 5, y - 2)
+        ctx.lineTo(pk.x + 4, y + 4)
+        ctx.lineTo(pk.x, y + 7)
+        ctx.lineTo(pk.x - 4, y + 4)
+        ctx.lineTo(pk.x - 5, y - 2)
+        ctx.closePath()
+        ctx.fill()
+        ctx.fillStyle = '#aeb9c2'
+        ctx.fillRect(pk.x - 1.5, y - 4, 3, 8)
+      } else if (pk.type === 'mag') {
+        ctx.fillStyle = '#6d5a22'
+        ctx.fillRect(pk.x - 5, y - 3, 10, 6)
+        ctx.fillStyle = '#8f7a3c'
+        ctx.fillRect(pk.x - 5, y - 5, 10, 2)
+        ctx.fillRect(pk.x - 5, y + 1, 3, 4)
+        ctx.fillRect(pk.x + 2, y + 1, 3, 4)
+        ctx.fillRect(pk.x - 1.5, y - 3, 3, 8)
       }
     }
   }

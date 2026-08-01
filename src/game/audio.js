@@ -96,6 +96,11 @@ export class AudioSys {
         this.noise({ dur: 0.12, freq: 3300, q: 1.4, gain: 0.5 })
         this.tone({ freq: 210, slideTo: 80, dur: 0.11, type: 'sine', gain: 0.45 })
         break
+      case 'lmg':
+        this.noise({ dur: 0.07, freq: 2900, q: 1.1, gain: 0.34 })
+        this.noise({ dur: 0.03, freq: 4200, q: 1.6, gain: 0.14 })
+        this.tone({ freq: 205, slideTo: 100, dur: 0.07, type: 'sine', gain: 0.32 })
+        break
     }
   }
 
@@ -150,6 +155,12 @@ export class AudioSys {
 
   daybreak() {
     ;[523, 659, 784, 1047].forEach((f, i) => this.tone({ freq: f, dur: 0.35, gain: 0.12, delay: i * 0.12 }))
+  }
+
+  win() {
+    ;[523, 659, 784, 1047, 1319].forEach((f, i) => this.tone({ freq: f, dur: 0.5, gain: 0.14, delay: i * 0.16 }))
+    this.tone({ freq: 262, slideTo: 523, dur: 1.3, type: 'triangle', gain: 0.16, delay: 0.85 })
+    this.noise({ dur: 0.6, freq: 900, q: 0.8, gain: 0.06, delay: 1.4, slideTo: 2400 })
   }
 
   melee() {

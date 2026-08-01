@@ -281,6 +281,16 @@ body {
   letter-spacing: 0.08em;
 }
 
+.hud-armor {
+  font-size: 12px;
+  color: #aeb9c2;
+  letter-spacing: 0.08em;
+}
+
+.win-title {
+  color: #d9a23f;
+}
+
 .hud-weapons {
   display: flex;
   gap: 10px;

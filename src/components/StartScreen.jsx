@@ -8,9 +8,9 @@ import { upsertPlayer, fetchLeaderboard, fetchStats } from '../game/api.js'
 
 const INTRO = [
   'the outbreak hit at midnight.',
+  'seven nights. survive them all.',
   'the streets of the city belong to the dead now.',
-  'you were lucky. you are still breathing.',
-  'hold the doors, loot what you can, survive the nights.'
+  'hold the doors, loot what you can, and you get out alive.'
 ]
 
 export function StartScreen() {
@@ -60,8 +60,8 @@ export function StartScreen() {
   return (
     <div className="overlay">
       <div className="start">
-        <div className="start-title">SPOTTED</div>
-        <div className="start-tag">the dead remember you</div>
+        <div className="start-title">ZOMBIE DEEP CITY</div>
+        <div className="start-tag">seven nights. then you get out.</div>
 
         <div className="start-intro">
           {INTRO.map((line, i) => (
@@ -118,7 +118,7 @@ export function StartScreen() {
         </div>
 
         <div className="start-line">
-          one city. five zones: residential, factory, railway, airport, jungle. zombies break doors down.
+          one city. five zones: residential, factory, railway, airport, jungle. survive 7 nights.
         </div>
 
         {s.highScore > 0 && <div className="start-high">HIGH SCORE {s.highScore.toLocaleString()}</div>}

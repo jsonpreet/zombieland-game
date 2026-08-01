@@ -63,7 +63,7 @@ export function InventoryScreen() {
                     </div>
                     <div className="shop-row-desc">
                       {owned && am
-                        ? `DMG ${w.dmg} · ROF ${w.rof} · MAG ${am.m}/${am.r}${w.pellets > 1 ? ` · ${w.pellets} PELLETS` : ''}${w.pierce > 0 ? ` · PIERCE ${w.pierce}` : ''}`
+                        ? `DMG ${w.dmg} · ROF ${w.rof} · MAG ${am.m}/${am.r}${w.pellets > 1 ? ` · ${w.pellets} PELLETS` : ''}${w.pierce > 0 ? ` · PIERCE ${w.pierce}` : ''}${s.ext?.[id] ? ' · EXTENDED' : ''}`
                         : 'NOT CRAFTED'}
                     </div>
                   </div>
@@ -120,7 +120,8 @@ export function InventoryScreen() {
                 <div className="shop-row-name">CONDITION</div>
                 <div className="shop-row-desc">
                   HP {s.health}/{s.maxHealth}
-                  {s.shield > 0 ? ` · SHIELD ${s.shield}` : ''} · KILLS {s.kills}
+                  {s.shield > 0 ? ` · SHIELD ${s.shield}` : ''}
+                  {s.armor > 0 ? ` · ARMOR ${s.armor}` : ''} · KILLS {s.kills}
                 </div>
               </div>
             </div>

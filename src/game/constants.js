@@ -79,29 +79,37 @@ export const LOOT = {
   ],
   trunk: [
     ['weapon', 22],
-    ['ammo', 30],
-    ['medkit', 20],
+    ['ammo', 26],
+    ['medkit', 16],
+    ['armor', 14],
+    ['mag', 16],
     ['scrap', 28, 5, 9]
   ],
   plane: [
     ['weapon', 25],
-    ['medkit', 25],
-    ['ammo', 30],
+    ['medkit', 22],
+    ['ammo', 26],
+    ['armor', 14],
+    ['mag', 18],
     ['scrap', 20, 6, 10]
   ],
   crate_rare: [
     ['weapon', 18],
     ['scrap', 30, 6, 10],
     ['can', 15],
-    ['ammo', 25],
+    ['ammo', 24],
+    ['armor', 12],
+    ['mag', 14],
     ['empty', 12]
   ],
   cabinet_rare: [
     ['weapon', 20],
-    ['medkit', 30],
+    ['medkit', 26],
     ['ration', 18],
     ['stim', 20],
-    ['ammo', 22]
+    ['ammo', 20],
+    ['armor', 16],
+    ['mag', 12]
   ],
   fridge_rare: [
     ['ration', 35],

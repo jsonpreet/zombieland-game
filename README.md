@@ -1,6 +1,6 @@
-# SPOTTED
+# ZOMBIE DEEP CITY
 
-A top-down zombie-survival arena. Survive the nights, hold the doors, and rebuild at dawn.
+A top-down zombie-survival arena. Survive seven nights, hold the doors, and rebuild at dawn.
 
 Live at the deployed URL of this repo. Uses Next.js (App Router) with a Postgres-backed leaderboard.
 

@@ -95,6 +95,7 @@ export function HUD() {
           </div>
           <span className={`hud-hpnum ${lowHp ? 'hud-hpnum-low' : ''}`}>{s.health}</span>
           {s.shield > 0 && <span className="hud-shield">SHLD {s.shield}</span>}
+          {s.armor > 0 && <span className="hud-armor">ARMOR {s.armor}</span>}
         </div>
         <div className="hud-weapons">
           <span className="hud-wep-label">WHEEL</span>

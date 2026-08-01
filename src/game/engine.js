@@ -83,6 +83,8 @@ export class Game {
       hp: 100,
       maxHp: 100,
       shield: 0,
+      armor: 0,
+      ext: {},
       aim: 0,
       fireCd: 0,
       meleeCd: 0,
@@ -1212,7 +1214,7 @@ export class Game {
       return
     }
 
-    if (this.phase === 'over') {
+    if (this.phase === 'over' || this.phase === 'win') {
       if (inp.press('enter') || inp.press('r')) this.startGame()
       this.particles.update(dt)
       this.texts.update(dt)
@@ -1551,12 +1553,22 @@ export class Game {
     this.decalBlood(tu.x, tu.y, 16)
   }
 
+  spawnPressure() {
+    const p = this.player
+    const pct = p.hp / p.maxHp
+    if (pct < 0.4) return 1.55
+    if (pct < 0.6) return 1.2
+    return randRange(0.8, 1.25)
+  }
+
   updateWave(dt) {
     if (this.toSpawn > 0) {
       this.spawnT -= dt
       if (this.spawnT <= 0) {
-        this.spawnT = clamp(1.7 - this.wave * 0.07, 0.55, 1.7)
-        const group = 1 + (this.wave >= 4 ? 1 : 0) + (this.wave >= 9 ? 1 : 0)
+        const press = this.spawnPressure()
+        this.spawnT = clamp((1.7 - this.wave * 0.07) / press, 0.3, 1.7)
+        let group = 1 + (this.wave >= 4 ? 1 : 0) + (this.wave >= 9 ? 1 : 0)
+        if (press >= 1.5) group++
         for (let i = 0; i < group; i++) {
           if (this.toSpawn <= 0) break
           this.spawnOne()
@@ -1652,6 +1664,10 @@ export class Game {
   }
 
   daybreak() {
+    if (this.wave >= 7) {
+      this.win()
+      return
+    }
     this.phase = 'day'
     this.day++
     const bonus = this.wave * 100
@@ -1670,12 +1686,38 @@ export class Game {
     this.emitHud()
   }
 
+  win() {
+    this.phase = 'win'
+    this.day++
+    const bonus = this.wave * 100 + 500
+    this.score += bonus
+    this.zombies = []
+    this.placeMode = false
+    this.audio.stopMusic()
+    this.audio.win()
+    this.newRecord = this.score > this.highScore
+    if (this.newRecord) {
+      this.highScore = this.score
+      window.localStorage.setItem('zdc.high', String(this.highScore))
+    }
+    this.submitRecord()
+    this.pushBanner('NIGHT 7 CLEARED', 'the city is yours. you survived', 3.2)
+    this.texts.add(this.player.x, this.player.y - 30, `+${bonus}`, '#d9a23f', 18)
+    this.emitHud()
+  }
+
   damagePlayer(dmg, z) {
     const p = this.player
     if (p.shield > 0) {
       const absorbed = Math.min(p.shield, dmg)
       p.shield -= absorbed
       dmg -= absorbed
+    }
+    if (p.armor > 0 && dmg > 0) {
+      p.armor--
+      dmg = Math.max(0, dmg - 35)
+      this.texts.add(p.x, p.y - 34, 'ARMOR', '#8fa0b0', 13)
+      this.audio.meleeHit()
     }
     if (dmg <= 0) return
     p.hp -= dmg
@@ -1704,6 +1746,8 @@ export class Game {
       this.pickups.push(makePickup('medkit', z.x, z.y - 40))
       this.pickups.push(makePickup('ammo', z.x + 30, z.y - 20))
       this.pickups.push(makePickup('shield', z.x - 30, z.y - 20))
+      this.pickups.push(makePickup('armor', z.x + 15, z.y + 30))
+      this.pickups.push(makePickup('mag', z.x - 15, z.y + 30))
       this.shake = 22
       this.texts.add(z.x, z.y - z.r - 40, 'BOSS DOWN', '#d9a23f', 22)
     }
@@ -1713,7 +1757,7 @@ export class Game {
       this.pickups.push(makePickup('item', z.x + randRange(-40, 40), z.y + randRange(-40, 40), kind))
     }
     if (Math.random() < 0.06) {
-      const types = ['medkit', 'medkit', 'ammo', 'ammo', 'double', 'speed', 'shield']
+      const types = ['medkit', 'medkit', 'ammo', 'ammo', 'double', 'speed', 'shield', 'armor', 'mag']
       const t = types[randInt(0, types.length - 1)]
       this.pickups.push(makePickup(t, z.x + randRange(-40, 40), z.y + randRange(-40, 40)))
     }
@@ -1781,6 +1825,29 @@ export class Game {
       p.reloading = false
       msg = '+AMMO'
       col = '#c9c4b2'
+    } else if (kind === 'armor') {
+      if (p.armor >= 3) {
+        msg = 'FULL'
+        col = '#cf8a3c'
+      } else {
+        p.armor++
+        msg = '+ARMOR'
+        col = '#8fa0b0'
+      }
+    } else if (kind === 'mag') {
+      const w = getWeapon(p.weaponId)
+      const am = this.getAmmo(p.weaponId)
+      if (!p.ext[p.weaponId]) {
+        p.ext[p.weaponId] = true
+        am.r = Math.min(am.r + Math.ceil(w.reserve * 0.5), w.reserve * 4)
+        am.m = Math.min(am.m + Math.ceil(w.mag * 0.5), w.mag * 2)
+        msg = `+MAG EXT ${w.name}`
+        col = '#d9a23f'
+      } else {
+        am.r = Math.min(am.r + 20, w.reserve * 4)
+        msg = '+AMMO'
+        col = '#c9c4b2'
+      }
     } else if (kind === 'weapon') {
       const found = ORDER.find((id) => id !== 'pistol' && !p.owned.includes(id))
       if (found) {
@@ -1929,7 +1996,7 @@ export class Game {
     this.audio.setMuted(this.audio.muted)
     this.banner = null
     this.bannerQ = [
-      { title: 'DAY 1', sub: 'the outbreak hit at midnight. the city is lost.', t: 2.6 },
+      { title: 'DAY 1', sub: 'the outbreak hit at midnight. survive 7 nights.', t: 2.6 },
       { title: 'HOLD THE DOORS', sub: 'zombies can break in. doors reset at dawn.', t: 2.6 },
       { title: 'LOOT WHAT YOU CAN', sub: 'buildings and cars hold supplies. be careful where you search.', t: 2.6 }
     ]
@@ -1989,7 +2056,7 @@ export class Game {
     this.newRecord = this.score > this.highScore
     if (this.newRecord) {
       this.highScore = this.score
-      window.localStorage.setItem('spotted.high', String(this.highScore))
+      window.localStorage.setItem('zdc.high', String(this.highScore))
     }
     this.submitRecord()
     this.emitHud()
@@ -2036,6 +2103,8 @@ export class Game {
       health: Math.max(0, Math.ceil(p.hp)),
       maxHealth: p.maxHp,
       shield: Math.ceil(p.shield),
+      armor: p.armor,
+      ext: { ...p.ext },
       weaponId: p.weaponId,
       weaponName: w.name,
       mag: am.m,
@@ -2128,7 +2197,7 @@ export class Game {
         this.banner = null
       }
     }
-    if (this.phase === 'playing' || this.phase === 'day' || this.phase === 'over') this.drawMinimap(ctx)
+    if (this.phase === 'playing' || this.phase === 'day' || this.phase === 'over' || this.phase === 'win') this.drawMinimap(ctx)
     if (this.phase === 'playing' && !this.placeMode) this.drawCrosshair(ctx)
   }
 
@@ -2182,7 +2251,7 @@ export class Game {
   }
 
   drawTorch(ctx) {
-    if (this.phase === 'over') return
+    if (this.phase === 'over' || this.phase === 'win') return
     const p = this.player
     const alpha = this.phase === 'playing' ? 0.34 : this.phase === 'menu' ? 0.2 : 0.26
     const g = ctx.createRadialGradient(p.x, p.y, 8, p.x, p.y, 270)
@@ -2342,28 +2411,7 @@ export class Game {
     ctx.save()
     ctx.rotate(p.aim)
     ctx.translate(recoilX, recoilY)
-    ctx.strokeStyle = '#4d5e42'
-    ctx.lineWidth = p.r * 0.42
-    ctx.lineCap = 'round'
-    ctx.beginPath()
-    ctx.moveTo(p.r * 0.42, -p.r * 0.55)
-    ctx.lineTo(p.r * 0.8, -p.r * 0.5)
-    ctx.moveTo(p.r * 0.42, p.r * 0.55)
-    ctx.lineTo(p.r * 0.8, p.r * 0.5)
-    ctx.stroke()
-    ctx.fillStyle = '#ecd3ab'
-    ctx.beginPath()
-    ctx.arc(p.r * 0.84, -p.r * 0.5, p.r * 0.24, 0, TAU)
-    ctx.arc(p.r * 0.84, p.r * 0.5, p.r * 0.24, 0, TAU)
-    ctx.fill()
-    ctx.fillStyle = '#1c1f18'
-    ctx.fillRect(p.r * 0.7, -3, 26, 6)
-    ctx.fillStyle = '#4a3420'
-    ctx.fillRect(14 + p.r * 0.7, -2, 8, 4)
-    ctx.fillStyle = '#6f7a58'
-    ctx.beginPath()
-    ctx.arc(20 + p.r * 0.7, 0, 3.4, 0, TAU)
-    ctx.fill()
+    this.drawWeaponInHand(ctx, p)
     ctx.restore()
 
     ctx.fillStyle = '#ecd3ab'
@@ -2413,6 +2461,117 @@ export class Game {
       ctx.setLineDash([])
     }
     ctx.restore()
+  }
+
+  drawWeaponInHand(ctx, p) {
+    const S = p.r
+    const HANDS = {
+      pistol: [[13, 5], [12, -5]],
+      smg: [[11, 6], [20, 5]],
+      shotgun: [[11, 5], [22, 4]],
+      rifle: [[11, 5], [24, 2]],
+      lmg: [[12, 5], [25, 4]]
+    }
+    const hands = HANDS[p.weaponId] || HANDS.pistol
+    const steel = '#2a2e33'
+    const dark = '#181b1e'
+    const wood = '#4a3420'
+    const skin = '#ecd3ab'
+
+    ctx.strokeStyle = '#4d5e42'
+    ctx.lineWidth = S * 0.42
+    ctx.lineCap = 'round'
+    ctx.beginPath()
+    for (const [hx, hy] of hands) {
+      ctx.moveTo(S * 0.48, hy)
+      ctx.lineTo(hx, hy)
+    }
+    ctx.stroke()
+    ctx.fillStyle = skin
+    for (const [hx, hy] of hands) {
+      ctx.beginPath()
+      ctx.arc(hx, hy, S * 0.26, 0, TAU)
+      ctx.fill()
+    }
+
+    if (p.weaponId === 'pistol') {
+      ctx.fillStyle = dark
+      ctx.fillRect(12, -4, 13, 5)
+      ctx.fillStyle = wood
+      ctx.fillRect(13, 0, 8, 3)
+      ctx.fillRect(11, 2, 5, 8)
+      ctx.fillStyle = steel
+      ctx.fillRect(13, -5, 6, 2)
+      ctx.fillRect(25, -2.5, 2, 4)
+    } else if (p.weaponId === 'smg') {
+      ctx.fillStyle = dark
+      ctx.fillRect(10, -4, 22, 6)
+      ctx.fillRect(4, -3, 7, 5)
+      ctx.fillStyle = steel
+      ctx.fillRect(30, -2.5, 5, 4)
+      ctx.save()
+      ctx.translate(15, 3)
+      ctx.rotate(0.5)
+      ctx.fillStyle = dark
+      ctx.fillRect(0, 0, 7, 12)
+      ctx.restore()
+      ctx.fillStyle = '#6f7a58'
+      ctx.beginPath()
+      ctx.arc(33, -1, 2.2, 0, TAU)
+      ctx.fill()
+    } else if (p.weaponId === 'shotgun') {
+      ctx.fillStyle = dark
+      ctx.fillRect(10, -5, 30, 6)
+      ctx.fillStyle = wood
+      ctx.fillRect(0, -5, 10, 8)
+      ctx.fillRect(20, -6, 8, 8)
+      ctx.fillStyle = steel
+      ctx.beginPath()
+      ctx.arc(41, -2, 2.6, 0, TAU)
+      ctx.fill()
+      ctx.strokeStyle = 'rgba(0,0,0,0.4)'
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      ctx.moveTo(21, -6)
+      ctx.lineTo(21, 2)
+      ctx.moveTo(26, -6)
+      ctx.lineTo(26, 2)
+      ctx.stroke()
+    } else if (p.weaponId === 'rifle') {
+      ctx.fillStyle = dark
+      ctx.fillRect(8, -3, 36, 4)
+      ctx.fillStyle = steel
+      ctx.fillRect(10, -5, 14, 5)
+      ctx.fillRect(14, 2, 6, 10)
+      ctx.fillRect(18, -10, 11, 4)
+      ctx.fillStyle = '#0f1113'
+      ctx.fillRect(27, -9.5, 3, 3)
+      ctx.fillStyle = wood
+      ctx.fillRect(0, -4, 10, 7)
+      ctx.fillStyle = steel
+      ctx.beginPath()
+      ctx.arc(45, -1.5, 1.8, 0, TAU)
+      ctx.fill()
+    } else {
+      ctx.fillStyle = dark
+      ctx.fillRect(8, -4.5, 38, 6)
+      ctx.fillRect(10, -6.5, 30, 2)
+      ctx.fillRect(15, 2, 8, 12)
+      ctx.fillStyle = wood
+      ctx.fillRect(0, -4, 9, 7)
+      ctx.fillStyle = steel
+      ctx.beginPath()
+      ctx.arc(47, -1.5, 2.4, 0, TAU)
+      ctx.fill()
+      ctx.strokeStyle = steel
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(26, 2)
+      ctx.lineTo(24, 8)
+      ctx.moveTo(30, 2)
+      ctx.lineTo(32, 8)
+      ctx.stroke()
+    }
   }
 
   drawBullets(ctx) {
@@ -2520,7 +2679,7 @@ export class Game {
 
   drawDarkness(ctx) {
     if (this.phase !== 'playing' && this.phase !== 'day' && this.phase !== 'menu') return
-    const dark = this.phase === 'menu' ? 0.13 : this.phase === 'day' ? 0.18 : this.darkness
+    const dark = this.phase === 'menu' ? 0.13 : this.phase === 'day' || this.phase === 'win' ? 0.18 : this.darkness
     if (dark <= 0.04) return
     const dc = this.darkLayer.getContext('2d')
     const w = this.viewW

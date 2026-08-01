@@ -9,6 +9,7 @@ import { ShopScreen } from '../components/ShopScreen.jsx'
 import { GameOverScreen } from '../components/GameOverScreen.jsx'
 import { PauseScreen } from '../components/PauseScreen.jsx'
 import { InventoryScreen } from '../components/InventoryScreen.jsx'
+import { WinScreen } from '../components/WinScreen.jsx'
 import { useHeartbeat } from '../hooks/useHeartbeat.js'
 
 export default function Page() {
@@ -34,8 +35,9 @@ export default function Page() {
       {s.phase === 'menu' && <StartScreen />}
       {s.phase === 'day' && <ShopScreen />}
       {s.phase === 'over' && <GameOverScreen />}
+      {s.phase === 'win' && <WinScreen />}
       {s.inventoryOpen && <InventoryScreen />}
-      {s.paused && s.phase !== 'menu' && s.phase !== 'over' && <PauseScreen />}
+      {s.paused && s.phase !== 'menu' && s.phase !== 'over' && s.phase !== 'win' && <PauseScreen />}
     </div>
   )
 }

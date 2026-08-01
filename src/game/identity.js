@@ -1,8 +1,9 @@
-const KEY = 'spotted.identity'
+const KEY = 'zdc.identity'
+const LEGACY_KEY = 'spotted.identity'
 
 export function getIdentity() {
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = localStorage.getItem(KEY) || localStorage.getItem(LEGACY_KEY)
     return raw ? JSON.parse(raw) : null
   } catch {
     return null
