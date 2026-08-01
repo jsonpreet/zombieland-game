@@ -1,5 +1,7 @@
 'use client'
+import { useEffect, useState } from 'react'
 import { useStore, store } from '../game/store.js'
+import { fetchLeaderboard, fetchStats } from '../game/api.js'
 
 const ITEM_ROW = [
   ['can', 'CAN'],
@@ -12,6 +14,30 @@ export function HUD() {
   const s = useStore()
   const hpPct = (s.health / s.maxHealth) * 100
   const lowHp = s.health <= 30
+  const [lb, setLb] = useState([])
+  const [stats, setStats] = useState(null)
+
+  useEffect(() => {
+    let alive = true
+    const load = () => {
+      fetchLeaderboard(5)
+        .then((d) => {
+          if (alive) setLb(d)
+        })
+        .catch(() => {})
+      fetchStats()
+        .then((d) => {
+          if (alive) setStats(d)
+        })
+        .catch(() => {})
+    }
+    load()
+    const t = setInterval(load, 20000)
+    return () => {
+      alive = false
+      clearInterval(t)
+    }
+  }, [])
 
   return (
     <div className="hud">
@@ -108,6 +134,27 @@ export function HUD() {
           ))}
         </div>
       </div>
+
+      {(s.phase === 'playing' || s.phase === 'day') && (
+        <div className="hud-lb">
+          <div className="hud-lb-head">TOP SURVIVORS</div>
+          <div className="hud-lb-live">
+            {stats ? `${stats.total_players} SURVIVORS` : '-- SURVIVORS'}
+            <span className="hud-sep">·</span>
+            {stats ? `${stats.online_players} ONLINE` : '-- ONLINE'}
+          </div>
+          {lb.length === 0 && <div className="hud-lb-row hud-lb-empty">no runs yet</div>}
+          {lb.map((r, i) => (
+            <div className="hud-lb-row" key={r.username}>
+              <span className="hud-lb-rank">{i + 1}</span>
+              {r.online && <span className="hud-lb-dot" />}
+              <span className="hud-lb-name">{r.username}</span>
+              <span className="hud-lb-night">N{r.best_wave}</span>
+              <span className="hud-lb-score">{r.best.toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

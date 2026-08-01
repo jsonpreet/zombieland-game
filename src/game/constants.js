@@ -13,7 +13,7 @@ export const ZONES = {
 export const AVENUE_X = [2000, 6000]
 export const AVENUE_Y = [2000, 6000]
 export const ROAD_W = 100
-export const RES_STREETS = [1700, 3300]
+export const RES_STREETS = [1500, 2500, 3500]
 
 export const PLAYER = {
   SPEED: 250,
@@ -123,6 +123,7 @@ export const CRAFTS = [
   { id: 'smg', name: 'SMG', desc: 'Full-auto 9mm, 30 round mag', cost: 35 },
   { id: 'shotgun', name: 'SHOTGUN', desc: '6 pellets, close range', cost: 50 },
   { id: 'rifle', name: 'RIFLE', desc: 'Piercing rounds, long range', cost: 70 },
+  { id: 'lmg', name: 'LMG', desc: 'Full-auto heavy 7.62, 60 round mag', cost: 90 },
   { id: 'ammo', name: 'AMMO PACK', desc: 'Refills current weapon reserve', cost: 8 },
   { id: 'medkit', name: 'MEDKIT', desc: 'Adds a medkit to your inventory', cost: 14 },
   { id: 'turret', name: 'SENTRY TURRET', desc: 'Auto-fires at zombies. Press T to place', cost: 30 }

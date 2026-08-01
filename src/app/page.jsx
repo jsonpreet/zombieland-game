@@ -8,9 +8,11 @@ import { StartScreen } from '../components/StartScreen.jsx'
 import { ShopScreen } from '../components/ShopScreen.jsx'
 import { GameOverScreen } from '../components/GameOverScreen.jsx'
 import { PauseScreen } from '../components/PauseScreen.jsx'
+import { useHeartbeat } from '../hooks/useHeartbeat.js'
 
 export default function Page() {
   const canvasRef = useRef(null)
+  useHeartbeat()
 
   useEffect(() => {
     const g = new Game(canvasRef.current)

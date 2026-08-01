@@ -4,6 +4,7 @@ import { WORLD } from './constants.js'
 export const ZTYPES = {
   walker: { r: 16, hp: 42, speed: 62, dmg: 9, score: 10, scrapMin: 1, scrapMax: 2, boss: false },
   runner: { r: 13, hp: 24, speed: 158, dmg: 7, score: 15, scrapMin: 1, scrapMax: 1, boss: false },
+  crawler: { r: 11, hp: 16, speed: 196, dmg: 5, score: 18, scrapMin: 0, scrapMax: 1, boss: false },
   brute: { r: 27, hp: 210, speed: 46, dmg: 22, score: 50, scrapMin: 6, scrapMax: 10, boss: false },
   boss: { r: 46, hp: 1500, speed: 54, dmg: 30, score: 500, scrapMin: 50, scrapMax: 70, boss: true }
 }
@@ -11,6 +12,7 @@ export const ZTYPES = {
 const SKIN = {
   walker: { body: '#74804f', bodyD: '#5a633c', head: '#85915c', arm: '#6d7850', eye: '#1b1c12' },
   runner: { body: '#85806a', bodyD: '#6a654f', head: '#94907c', arm: '#7d7863', eye: '#22220f' },
+  crawler: { body: '#7a7a6a', bodyD: '#5f5f52', head: '#8a8a78', arm: '#6d6d5e', eye: '#3a2c14' },
   brute: { body: '#4c5236', bodyD: '#3a3f28', head: '#565c3e', arm: '#454a30', eye: '#d9a23f' },
   boss: { body: '#44492f', bodyD: '#34381f', head: '#4b5134', arm: '#3e4329', eye: '#e0a63c' }
 }

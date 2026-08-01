@@ -8,17 +8,26 @@ export async function GET(req) {
       `SELECT p.username, p.birth_year,
               MAX(s.score) AS best,
               MAX(s.wave) AS best_wave,
-              COUNT(s.id) AS runs
+              MAX(s.created_at) AS last_played,
+              SUM(s.kills) AS kills,
+              COUNT(s.id) AS runs,
+              (p.last_seen > now() - interval '3 minutes') AS online
        FROM players p
        LEFT JOIN sessions s ON s.player_id = p.id
-       GROUP BY p.id, p.username, p.birth_year
+       GROUP BY p.id, p.username, p.birth_year, p.last_seen
        HAVING COUNT(s.id) > 0
        ORDER BY best DESC
        LIMIT $1`,
       [limit]
     )
     const year = new Date().getFullYear()
-    return NextResponse.json(rows.map((r) => ({ ...r, age: r.birth_year ? year - r.birth_year : null })))
+    return NextResponse.json(
+      rows.map((r) => ({
+        ...r,
+        age: r.birth_year ? year - r.birth_year : null,
+        online: Boolean(r.online)
+      }))
+    )
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

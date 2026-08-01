@@ -1,10 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useStore } from '../game/store.js'
-import { store } from '../game/store.js'
 import { game } from '../game/engine.js'
 import { getIdentity, setIdentity } from '../game/identity.js'
-import { upsertPlayer, fetchLeaderboard } from '../game/api.js'
+import { upsertPlayer, fetchLeaderboard, fetchStats } from '../game/api.js'
 
 const INTRO = [
   'the outbreak hit at midnight.',
@@ -20,14 +20,23 @@ export function StartScreen() {
   const [year, setYear] = useState(saved?.birthYear ? String(saved.birthYear) : '')
   const [busy, setBusy] = useState(false)
   const [board, setBoard] = useState([])
+  const [stats, setStats] = useState(null)
 
   useEffect(() => {
     let live = true
-    fetchLeaderboard(5)
-      .then((rows) => live && setBoard(rows))
-      .catch(() => {})
+    const load = () => {
+      fetchLeaderboard(5)
+        .then((rows) => live && setBoard(rows))
+        .catch(() => {})
+      fetchStats()
+        .then((s) => live && setStats(s))
+        .catch(() => {})
+    }
+    load()
+    const t = setInterval(load, 30000)
     return () => {
       live = false
+      clearInterval(t)
     }
   }, [])
 
@@ -114,9 +123,20 @@ export function StartScreen() {
 
         {s.highScore > 0 && <div className="start-high">HIGH SCORE {s.highScore.toLocaleString()}</div>}
 
+        {stats && (
+          <div className="start-stats">
+            <span>{stats.total_players} survivors</span>
+            <span className="start-stats-dot">·</span>
+            <span>{stats.online_players} online now</span>
+            <span className="start-stats-dot">·</span>
+            <span>{stats.total_kills.toLocaleString()} dead killed</span>
+          </div>
+        )}
+
         <button className={`btn btn-primary btn-lg${valid ? '' : ' btn-disabled'}`} onClick={deploy} disabled={!valid || busy}>
           {busy ? 'REGISTERING...' : 'DEPLOY'}
         </button>
+        {!valid && <div className="start-hint">enter a survivor name (2+ characters) to deploy</div>}
         <div className="start-press">or press ENTER</div>
 
         {board.length > 0 && (
@@ -125,13 +145,19 @@ export function StartScreen() {
             {board.map((r, i) => (
               <div key={r.username} className="start-lb-row">
                 <span className="start-lb-rank">{String(i + 1).padStart(2, '0')}</span>
-                <span className="start-lb-name">{r.username}</span>
+                <span className="start-lb-name">
+                  {r.online && <span className="lb-dot" title="online" />}
+                  {r.username}
+                </span>
                 <span className="start-lb-meta">{r.age ? `${r.age}y` : ''} · night {r.best_wave}</span>
                 <span className="start-lb-score">{r.best.toLocaleString()}</span>
               </div>
             ))}
           </div>
         )}
+        <Link href="/leaderboard" className="btn-link">
+          FULL LEADERBOARD
+        </Link>
       </div>
     </div>
   )

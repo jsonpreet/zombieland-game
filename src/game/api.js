@@ -28,3 +28,9 @@ export async function fetchLeaderboard(limit = 5) {
   if (!res.ok) throw new Error(`api leaderboard ${res.status}`)
   return res.json()
 }
+
+export async function fetchStats() {
+  const res = await fetch('/api/stats')
+  if (!res.ok) throw new Error(`api stats ${res.status}`)
+  return res.json()
+}

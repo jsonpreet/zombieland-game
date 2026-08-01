@@ -178,7 +178,17 @@ export class Game {
     this.ground = document.createElement('canvas')
     this.ground.width = WORLD
     this.ground.height = WORLD
+    this.genWorld()
+  }
+
+  genWorld() {
     const g = this.ground.getContext('2d')
+
+    this.buildings = []
+    this.obstacles = []
+    this.containers = []
+    this.cars = []
+    this.streetLights = []
 
     this.paintGround(g)
     this.paintZones(g)
@@ -409,7 +419,7 @@ export class Game {
   }
 
   makeBuilding(g, x, y, w, h, style) {
-    const b = { x, y, w, h, style, walls: [], infested: Math.random() < INFESTED_CHANCE, doorHp: DOOR_HP, doorBroken: false, doorSide: 0, doorD: 0, doorX: 0, doorY: 0, lamps: [] }
+    const b = { x, y, w, h, style, walls: [], infested: Math.random() < INFESTED_CHANCE, doorHp: DOOR_HP, doorBroken: false, doorSide: 0, doorD: 0, doorX: 0, doorY: 0 }
     this.buildings.push(b)
     const mk = (wx, wy, ww, wh) => {
       const r = { kind: 'rect', x: wx, y: wy, w: ww, h: wh, rot: 0 }
@@ -445,28 +455,6 @@ export class Game {
     if (side === 3) segV(x - T / 2)
     else vert(x - T / 2)
 
-    const lampPos = (lx, ly) => {
-      if (this.pointInBuilding(lx, ly)) return
-      for (const c of this.buildings) {
-        if (c !== b && this.rectsNear(lx, ly, 1, 1, c.x, c.y, c.w, c.h, 10)) return
-      }
-      b.lamps.push({ x: lx, y: ly })
-    }
-    if (side === 0) lampPos(b.doorX, b.y - 20)
-    else if (side === 2) lampPos(b.doorX, b.y + b.h + 20)
-    else if (side === 1) lampPos(b.x + b.w + 20, b.doorY)
-    else lampPos(b.x - 20, b.doorY)
-    const corners = [
-      [x + 14, y + 14],
-      [x + w - 14, y + 14],
-      [x + 14, y + h - 14],
-      [x + w - 14, y + h - 14]
-    ].filter(([lx, ly]) => dist(lx, ly, b.doorX, b.doorY) > 150)
-    if (corners.length) {
-      const [lx, ly] = corners[randInt(0, corners.length - 1)]
-      lampPos(lx, ly)
-    }
-
     this.drawBuilding(g, b)
     return b
   }
@@ -477,16 +465,18 @@ export class Game {
     this.makeBuilding(g, 6280, 5860, 280, 210, 'hangar')
 
     const layouts = [
-      { zone: 'residential', n: 18, style: 'house', w: [150, 200], h: [130, 175] },
-      { zone: 'factory', n: 6, style: 'shed', w: [240, 340], h: [200, 280] },
-      { zone: 'railway', n: 3, style: 'house', w: [150, 180], h: [130, 160], eastOnly: true },
-      { zone: 'airport', n: 2, style: 'shed', w: [170, 220], h: [140, 180], southOnly: true }
+      { zone: 'residential', n: 22, style: 'house', w: [150, 200], h: [130, 175] },
+      { zone: 'residential', n: 3, style: 'block', w: [230, 310], h: [190, 250] },
+      { zone: 'factory', n: 8, style: 'shed', w: [240, 340], h: [200, 280] },
+      { zone: 'factory', n: 2, style: 'office', w: [280, 360], h: [220, 300] },
+      { zone: 'railway', n: 4, style: 'house', w: [150, 180], h: [130, 160], eastOnly: true },
+      { zone: 'airport', n: 4, style: 'shed', w: [170, 220], h: [140, 180], southOnly: true }
     ]
     for (const L of layouts) {
       const z = ZONES[L.zone]
       let placed = 0
       let guard = 0
-      while (placed < L.n && guard < 1200) {
+      while (placed < L.n && guard < 3000) {
         guard++
         const w = randInt(L.w[0], L.w[1])
         const h = randInt(L.h[0], L.h[1])
@@ -513,13 +503,7 @@ export class Game {
   drawBuilding(g, b) {
     const bccx = b.x + b.w / 2
     const bccy = b.y + b.h / 2
-    const br = Math.max(b.w, b.h) * 0.72
-    const igh = g.createRadialGradient(bccx, bccy, 10, bccx, bccy, br)
-    igh.addColorStop(0, 'rgba(255,190,110,0.075)')
-    igh.addColorStop(1, 'rgba(255,190,110,0)')
-    g.fillStyle = igh
-    g.fillRect(b.x - br, b.y - br, br * 2, br * 2)
-    const fill = b.style === 'shed' ? '#23261d' : b.style === 'hangar' ? '#272a24' : b.style === 'station' ? '#262a20' : '#262a20'
+    const fill = b.style === 'shed' ? '#23261d' : b.style === 'hangar' ? '#272a24' : b.style === 'block' ? '#252a20' : b.style === 'office' ? '#20242a' : '#262a20'
     g.fillStyle = fill
     g.fillRect(b.x, b.y, b.w, b.h)
     g.fillStyle = 'rgba(255,255,255,0.02)'
@@ -553,6 +537,37 @@ export class Game {
       g.fillRect(b.x, b.y + b.h - 16, b.w, 8)
       g.fillStyle = 'rgba(200,160,90,0.2)'
       g.fillRect(b.x + b.w * 0.32, b.y + 10, b.w * 0.36, 16)
+    } else if (b.style === 'block') {
+      g.fillStyle = 'rgba(200,210,190,0.09)'
+      for (let wy = b.y + 26; wy < b.y + b.h - 20; wy += 34) {
+        for (let wx = b.x + 26; wx < b.x + b.w - 22; wx += 34) {
+          g.fillRect(wx, wy, 16, 20)
+        }
+      }
+      g.fillStyle = 'rgba(190,120,60,0.4)'
+      for (let wx = b.x + 26; wx < b.x + b.w - 22; wx += 34) {
+        if (Math.random() < 0.2) {
+          const row = b.y + 26 + randInt(0, Math.max(0, Math.floor((b.h - 46) / 34))) * 34
+          g.fillRect(wx, row, 16, 20)
+        }
+      }
+    } else if (b.style === 'office') {
+      g.strokeStyle = 'rgba(140,170,190,0.16)'
+      g.lineWidth = 2
+      for (let wx = b.x + 24; wx < b.x + b.w; wx += 30) {
+        g.beginPath()
+        g.moveTo(wx, b.y + 6)
+        g.lineTo(wx, b.y + b.h - 6)
+        g.stroke()
+      }
+      for (let wy = b.y + 24; wy < b.y + b.h; wy += 30) {
+        g.beginPath()
+        g.moveTo(b.x + 6, wy)
+        g.lineTo(b.x + b.w - 6, wy)
+        g.stroke()
+      }
+      g.fillStyle = 'rgba(140,170,190,0.08)'
+      g.fillRect(b.x + b.w * 0.28, b.y + b.h - 26, b.w * 0.44, 12)
     }
     g.fillStyle = 'rgba(0,0,0,0.1)'
     for (let i = 0; i < 4; i++) {
@@ -589,19 +604,6 @@ export class Game {
       g.fillStyle = 'rgba(0,0,0,0.45)'
       g.fillRect(wl.x - wl.w / 2, wl.y + wl.h / 2 - 2.5, wl.w, 2.5)
     }
-    for (const l of b.lamps) {
-      g.fillStyle = '#1e241c'
-      g.fillRect(l.x - 2, l.y - 8, 4, 12)
-      g.fillStyle = '#e8b04a'
-      g.beginPath()
-      g.arc(l.x, l.y - 10, 4, 0, TAU)
-      g.fill()
-      const lg = g.createRadialGradient(l.x, l.y - 10, 2, l.x, l.y - 10, 54)
-      lg.addColorStop(0, 'rgba(255,196,110,0.22)')
-      lg.addColorStop(1, 'rgba(255,196,110,0)')
-      g.fillStyle = lg
-      g.fillRect(l.x - 54, l.y - 64, 108, 108)
-    }
   }
 
   genStreetLights(g) {
@@ -623,13 +625,13 @@ export class Game {
       g.fillRect(x - 9, y - 26, 18, 6)
       g.fillStyle = '#e8b04a'
       g.beginPath()
-      g.arc(x, y - 28, 4, 0, TAU)
+      g.arc(x, y - 28, 3, 0, TAU)
       g.fill()
-      const lg = g.createRadialGradient(x, y - 28, 3, x, y - 28, 70)
-      lg.addColorStop(0, 'rgba(255,196,110,0.28)')
+      const lg = g.createRadialGradient(x, y - 28, 3, x, y - 28, 52)
+      lg.addColorStop(0, 'rgba(255,196,110,0.16)')
       lg.addColorStop(1, 'rgba(255,196,110,0)')
       g.fillStyle = lg
-      g.fillRect(x - 70, y - 98, 140, 140)
+      g.fillRect(x - 52, y - 80, 104, 104)
     }
     let k = 0
     for (const ax of AVENUE_X) {
@@ -644,8 +646,8 @@ export class Game {
         k++
       }
     }
-    for (let i = 0; i < 10; i++) {
-      const a = (i / 10) * TAU
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * TAU
       pole(CENTER + Math.cos(a) * 540, CENTER + Math.sin(a) * 540)
     }
   }
@@ -653,7 +655,7 @@ export class Game {
   genTrees(g) {
     let placed = 0
     let guard = 0
-    while (placed < 400 && guard < 2600) {
+    while (placed < 500 && guard < 3400) {
       guard++
       let x = 0
       let y = 0
@@ -756,8 +758,8 @@ export class Game {
 
   genCars(g) {
     const addCar = (x, y, rot, kind, color) => {
-      const hw = kind === 'car' ? 47 : kind === 'train' ? 100 : 115
-      const hh = kind === 'car' ? 23 : kind === 'train' ? 22 : 30
+      const hw = kind === 'car' ? 47 : kind === 'bus' ? 96 : kind === 'truck' ? 86 : kind === 'train' ? 100 : 115
+      const hh = kind === 'car' ? 23 : kind === 'bus' ? 26 : kind === 'truck' ? 30 : kind === 'train' ? 22 : 30
       let bad = false
       for (let i = 0; i < 4; i++) {
         const lx = (i % 2 ? 1 : -1) * (hw + 80)
@@ -798,10 +800,16 @@ export class Game {
       this.drawCar(g, car)
       return true
     }
+    addCar(2500, 4550, Math.PI / 2, 'train')
+    addCar(2500, 5300, Math.PI / 2, 'train')
+    addCar(2500, 6250, Math.PI / 2, 'train')
+    addCar(2500, 6750, Math.PI / 2, 'train')
+    addCar(5150, 5150, 0, 'plane')
+    addCar(6400, 5250, 0.06, 'plane')
     const spawnIn = (z, n, rotR = () => randRange(0, TAU)) => {
       let placed = 0
       let guard = 0
-      while (placed < n && guard < 300) {
+      while (placed < n && guard < 600) {
         guard++
         const x = randRange(z.x + 130, z.x + z.w - 130)
         const y = randRange(z.y + 130, z.y + z.h - 130)
@@ -810,26 +818,24 @@ export class Game {
         if (addCar(x, y, rotR(), 'car')) placed++
       }
     }
-    spawnIn(ZONES.residential, 14)
-    spawnIn(ZONES.factory, 5)
-    spawnIn(ZONES.railway, 2)
-    spawnIn(ZONES.airport, 4)
+    spawnIn(ZONES.residential, 24)
+    spawnIn(ZONES.factory, 8)
+    spawnIn(ZONES.railway, 4)
+    spawnIn(ZONES.airport, 6)
 
     const roadCar = (x, y, rot) => {
       if (addCar(x, y, rot, 'car')) return
     }
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
       roadCar(2000 + (i % 2 ? 58 : -58), randRange(2400, 6600), Math.PI / 2)
       roadCar(6000 + (i % 2 ? 58 : -58), randRange(2400, 6600), Math.PI / 2)
       roadCar(randRange(2400, 6600), 2000 + (i % 2 ? 58 : -58), 0)
       roadCar(randRange(2400, 6600), 6000 + (i % 2 ? 58 : -58), 0)
     }
-
-    addCar(2500, 4550, Math.PI / 2, 'train')
-    addCar(2500, 6250, Math.PI / 2, 'train')
-    addCar(2500, 6750, Math.PI / 2, 'train')
-    addCar(5150, 5150, 0, 'plane')
-    addCar(6400, 5250, 0.06, 'plane')
+    for (let i = 0; i < 4; i++) {
+      addCar(2000 + (i % 2 ? 58 : -58), randRange(2600, 6600), Math.PI / 2, 'bus')
+      addCar(6000 + (i % 2 ? 58 : -58), randRange(2600, 6600), Math.PI / 2, 'truck')
+    }
   }
 
   drawCar(g, car) {
@@ -895,6 +901,34 @@ export class Game {
       }
       g.fillStyle = 'rgba(0,0,0,0.45)'
       g.fillRect(-hw + 6, -2, hw * 0.4, 4)
+    } else if (car.kind === 'bus') {
+      g.fillStyle = car.color
+      this.rrect(g, -hw, -hh, hw * 2, hh * 2, 5)
+      g.fill()
+      g.strokeStyle = 'rgba(0,0,0,0.45)'
+      g.lineWidth = 2
+      g.stroke()
+      g.fillStyle = 'rgba(210,220,210,0.16)'
+      for (let wx = -hw + 18; wx < hw - 24; wx += 26) {
+        g.fillRect(wx, -hh + 8, 16, hh * 2 - 16)
+      }
+      g.fillStyle = '#26281f'
+      g.fillRect(-hw + 2, -hh, 10, hh * 2)
+      g.fillStyle = 'rgba(190,196,180,0.25)'
+      g.fillRect(hw - 16, -9, 14, 18)
+      g.fillStyle = 'rgba(0,0,0,0.4)'
+      g.fillRect(-hw + 2, -3, 8, 6)
+    } else if (car.kind === 'truck') {
+      g.fillStyle = '#26281f'
+      this.rrect(g, -hw + 8, -hh + 2, hw - 6, hh * 2 - 4, 3)
+      g.fill()
+      g.fillStyle = car.color
+      g.fillRect(-hw, -hh + 2, 28, hh * 2 - 4)
+      g.fillStyle = 'rgba(200,210,190,0.22)'
+      g.fillRect(-hw + 5, -hh + 7, 10, 9)
+      g.fillRect(-hw + 5, -hh + 21, 10, 9)
+      g.fillStyle = 'rgba(0,0,0,0.4)'
+      g.fillRect(-hw + 14, -hh, 9, 5)
     } else {
       g.fillStyle = '#15160f'
       for (const [wx, wy] of [
@@ -1469,8 +1503,9 @@ export class Game {
     const w = this.wave
     let type = 'walker'
     const r = Math.random()
-    if (w >= 6 && r < 0.18) type = 'brute'
-    else if (w >= 3 && r < 0.42) type = 'runner'
+    if (w >= 6 && r < 0.12) type = 'brute'
+    else if (w >= 4 && r < 0.34) type = 'runner'
+    else if (w >= 2 && r < 0.52) type = 'crawler'
     this.zombies.push(spawnZombie(type, x, y, w, this))
     if (Math.random() < 0.3) this.audio.groan()
   }
@@ -1513,6 +1548,27 @@ export class Game {
     this.emitHud()
   }
 
+  seedHomes() {
+    for (const b of this.buildings) {
+      if (!b.infested) continue
+      if (this.player.x > b.x && this.player.x < b.x + b.w && this.player.y > b.y && this.player.y < b.y + b.h) continue
+      const n = randInt(2, 3)
+      for (let i = 0; i < n; i++) {
+        let zx = 0
+        let zy = 0
+        for (let t = 0; t < 12; t++) {
+          zx = randRange(b.x + 46, b.x + b.w - 46)
+          zy = randRange(b.y + 46, b.y + b.h - 46)
+          if (dist(zx, zy, b.doorX, b.doorY) > 80) break
+        }
+        const roll = Math.random()
+        const z = spawnZombie(roll < 0.2 ? 'crawler' : roll < 0.5 ? 'runner' : 'walker', zx, zy, 1, this)
+        z.home = b
+        this.zombies.push(z)
+      }
+    }
+  }
+
   daybreak() {
     this.phase = 'day'
     this.day++
@@ -1522,6 +1578,8 @@ export class Game {
       b.doorHp = DOOR_HP
       b.doorBroken = false
     }
+    this.zombies = []
+    this.seedHomes()
     this.audio.daybreak()
     this.audio.stopMusic()
     this.placeMode = false
@@ -1736,7 +1794,7 @@ export class Game {
     if (this.phase !== 'day') return
     const craft = CRAFTS.find((c) => c.id === id)
     if (this.scrap < craft.cost) return
-    if (id === 'smg' || id === 'shotgun' || id === 'rifle') {
+    if (id === 'smg' || id === 'shotgun' || id === 'rifle' || id === 'lmg') {
       if (this.player.owned.includes(id)) return
       this.player.owned.push(id)
       this.getAmmo(id)
@@ -1777,27 +1835,8 @@ export class Game {
     this.paused = false
     this.sessionStart = performance.now()
     this.near = null
-    for (const c of this.containers) c.looted = false
-    for (const car of this.cars) car.looted = false
-    for (const b of this.buildings) {
-      b.doorHp = DOOR_HP
-      b.doorBroken = false
-      if (b.infested) {
-        const n = randInt(2, 3)
-        for (let i = 0; i < n; i++) {
-          let zx = 0
-          let zy = 0
-          for (let t = 0; t < 12; t++) {
-            zx = randRange(b.x + 46, b.x + b.w - 46)
-            zy = randRange(b.y + 46, b.y + b.h - 46)
-            if (dist(zx, zy, b.doorX, b.doorY) > 80) break
-          }
-          const z = spawnZombie(Math.random() < 0.3 ? 'runner' : 'walker', zx, zy, 1, this)
-          z.home = b
-          this.zombies.push(z)
-        }
-      }
-    }
+    this.genWorld()
+    this.seedHomes()
     this.camera.x = this.player.x
     this.camera.y = this.player.y
     this.newRecord = false
@@ -1976,6 +2015,7 @@ export class Game {
         this.banner = null
       }
     }
+    if (this.phase === 'playing' || this.phase === 'day' || this.phase === 'over') this.drawMinimap(ctx)
     if (this.phase === 'playing' && !this.placeMode) this.drawCrosshair(ctx)
   }
 
@@ -2396,13 +2436,7 @@ export class Game {
       const viewB = this.camera.y + h / 2 + 900
       for (const l of this.streetLights) {
         if (l.x < viewL || l.x > viewR || l.y < viewT || l.y > viewB) continue
-        lights.push({ x: l.x - this.camera.x + w / 2, y: l.y - this.camera.y + h / 2, r: 175 })
-      }
-      for (const b of this.buildings) {
-        for (const l of b.lamps) {
-          if (l.x < viewL || l.x > viewR || l.y < viewT || l.y > viewB) continue
-          lights.push({ x: l.x - this.camera.x + w / 2, y: l.y - this.camera.y + h / 2, r: 135 })
-        }
+        lights.push({ x: l.x - this.camera.x + w / 2, y: l.y - this.camera.y + h / 2, r: 150 })
       }
     } else {
       lights.push({ x: w / 2, y: h / 2, r: 430 })
@@ -2465,5 +2499,82 @@ export class Game {
     ctx.beginPath()
     ctx.arc(m.x, m.y, 1.4, 0, TAU)
     ctx.fill()
+  }
+
+  drawMinimap(ctx) {
+    const size = 168
+    const pad = 8
+    const x0 = this.viewW - size - 22
+    const y0 = this.viewH - size - 96
+    const sc = (size - pad * 2) / WORLD
+    const X = (v) => x0 + pad + v * sc
+    const Y = (v) => y0 + pad + v * sc
+
+    ctx.save()
+    ctx.fillStyle = 'rgba(9,11,8,0.66)'
+    ctx.beginPath()
+    this.rrect(ctx, x0, y0, size, size, 8)
+    ctx.fill()
+    ctx.strokeStyle = 'rgba(214,178,120,0.28)'
+    ctx.lineWidth = 1
+    ctx.stroke()
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.13)'
+    ctx.lineWidth = 1.4
+    for (const ax of AVENUE_X) {
+      ctx.beginPath()
+      ctx.moveTo(X(ax), Y(CORE))
+      ctx.lineTo(X(ax), Y(CORE_END))
+      ctx.stroke()
+    }
+    for (const ay of AVENUE_Y) {
+      ctx.beginPath()
+      ctx.moveTo(X(CORE), Y(ay))
+      ctx.lineTo(X(CORE_END), Y(ay))
+      ctx.stroke()
+    }
+    for (const sx of RES_STREETS) {
+      ctx.beginPath()
+      ctx.moveTo(X(sx), Y(1040))
+      ctx.lineTo(X(sx), Y(3960))
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(X(1040), Y(sx))
+      ctx.lineTo(X(3960), Y(sx))
+      ctx.stroke()
+    }
+
+    for (const b of this.buildings) {
+      ctx.fillStyle = b.infested ? 'rgba(216,168,84,0.85)' : 'rgba(124,128,112,0.9)'
+      ctx.fillRect(X(b.x), Y(b.y), Math.max(1.6, b.w * sc), Math.max(1.6, b.h * sc))
+    }
+
+    ctx.fillStyle = 'rgba(224,84,64,0.95)'
+    for (const z of this.zombies) {
+      ctx.fillRect(X(z.x) - 1, Y(z.y) - 1, 2.2, 2.2)
+    }
+
+    const camX = Math.max(0, Math.min(WORLD - this.viewW, this.camera.x - this.viewW / 2))
+    const camY = Math.max(0, Math.min(WORLD - this.viewH, this.camera.y - this.viewH / 2))
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)'
+    ctx.lineWidth = 1
+    ctx.setLineDash([3, 3])
+    ctx.strokeRect(X(camX), Y(camY), Math.min(this.viewW, WORLD) * sc, Math.min(this.viewH, WORLD) * sc)
+    ctx.setLineDash([])
+
+    ctx.fillStyle = '#e9e5d6'
+    ctx.beginPath()
+    ctx.arc(X(this.player.x), Y(this.player.y), 3, 0, TAU)
+    ctx.fill()
+    ctx.strokeStyle = 'rgba(0,0,0,0.85)'
+    ctx.lineWidth = 1
+    ctx.stroke()
+    ctx.strokeStyle = '#e9e5d6'
+    ctx.lineWidth = 1.4
+    ctx.beginPath()
+    ctx.moveTo(X(this.player.x), Y(this.player.y))
+    ctx.lineTo(X(this.player.x + Math.cos(this.player.rot) * 9), Y(this.player.y + Math.sin(this.player.rot) * 9))
+    ctx.stroke()
+    ctx.restore()
   }
 }

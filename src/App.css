@@ -535,6 +535,189 @@ body {
   color: var(--amber);
 }
 
+.start-stats {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--mut);
+  letter-spacing: 0.06em;
+}
+
+.start-hint {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber);
+  opacity: 0.75;
+}
+
+.start-stats-dot {
+  color: var(--dim);
+}
+
+.lb-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hp);
+  margin-right: 8px;
+  vertical-align: 1px;
+}
+
+.lb-page {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 20px 40px;
+  gap: 24px;
+}
+
+.lb-head {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lb-kicker {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.4em;
+  color: var(--amber);
+}
+
+.lb-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(30px, 5vw, 46px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+}
+
+.lb-sub {
+  font-size: 13px;
+  color: var(--mut);
+}
+
+.lb-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(110px, 1fr));
+  gap: 10px;
+  width: min(880px, 94vw);
+}
+
+.lb-stat {
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  padding: 14px 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.lb-num {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--amber);
+}
+
+.lb-label {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+}
+
+.lb-table-wrap {
+  width: min(880px, 94vw);
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.lb-table th {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--dim);
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--edge);
+  white-space: nowrap;
+}
+
+.lb-table td {
+  padding: 9px 12px;
+  color: var(--mut);
+  border-bottom: 1px solid var(--edge2);
+  white-space: nowrap;
+}
+
+.lb-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.lb-table tbody tr:hover td {
+  background: var(--panel2);
+}
+
+.lb-r {
+  text-align: right;
+}
+
+.lb-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.lb-score {
+  font-family: 'Chakra Petch', sans-serif;
+  color: var(--amber);
+}
+
+.lb-last {
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.lb-live td:first-child {
+  color: var(--hp);
+}
+
+.lb-empty {
+  padding: 22px;
+  text-align: center;
+  color: var(--dim);
+  font-size: 13px;
+}
+
+.lb-back {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  color: var(--amber);
+  text-decoration: none;
+  margin-top: 4px;
+}
+
+.lb-back:hover {
+  color: var(--ink);
+}
+
 .shop {
   width: min(760px, 92vw);
   background: var(--panel);
@@ -800,6 +983,81 @@ body {
   color: var(--amber);
 }
 
+.hud-lb {
+  position: absolute;
+  top: 108px;
+  right: 24px;
+  width: 224px;
+  background: rgba(9, 11, 8, 0.6);
+  border: 1px solid rgba(214, 178, 120, 0.18);
+  border-radius: 8px;
+  padding: 10px 12px;
+  pointer-events: none;
+}
+
+.hud-lb-head {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--dim);
+  margin-bottom: 6px;
+}
+
+.hud-lb-live {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--mut);
+  margin-bottom: 8px;
+}
+
+.hud-lb-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 2px 0;
+  line-height: 1.2;
+}
+
+.hud-lb-empty {
+  color: var(--mut);
+  font-size: 11px;
+  padding: 4px 0;
+}
+
+.hud-lb-rank {
+  color: var(--dim);
+  width: 14px;
+  flex: none;
+}
+
+.hud-lb-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hp);
+  flex: none;
+}
+
+.hud-lb-name {
+  color: var(--ink);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hud-lb-night {
+  color: var(--mut);
+  font-size: 10px;
+  flex: none;
+}
+
+.hud-lb-score {
+  color: var(--amber);
+  font-family: 'Chakra Petch', sans-serif;
+  flex: none;
+}
+
 @media (max-width: 640px) {
   .shop-cols {
     grid-template-columns: 1fr;
@@ -811,6 +1069,10 @@ body {
   }
 
   .hud-tc {
+    display: none;
+  }
+
+  .hud-lb {
     display: none;
   }
 
